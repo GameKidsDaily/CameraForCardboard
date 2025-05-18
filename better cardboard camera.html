@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cardboard Camera</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      height: 100%;
+      user-select: none;
+      font-family: sans-serif;
+      color: white;
+    }
+    #container {
+      display: none;
+      flex-direction: row;
+      height: 100vh;
+      width: 100vw;
+    }
+    video {
+      width: 50vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+    #startButton, #errorMsg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      padding: 20px 40px;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 9999;
+    }
+    #errorMsg {
+      background: red;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <button id="startButton">Start Camera</button>
+  <div id="errorMsg">Camera access denied.</div>
+  <div id="container">
+    <video id="leftEye" muted playsinline></video>
+    <video id="rightEye" muted playsinline></video>
+  </div>
+
+  <script>
+    const startButton = document.getElementById("startButton");
+    const errorMsg = document.getElementById("errorMsg");
+    const leftEye = document.getElementById("leftEye");
+    const rightEye = document.getElementById("rightEye");
+    const container = document.getElementById("container");
+
+    // Ask for permission immediately
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(() => {
+        // Permission granted — show start button
+        startButton.style.display = "block";
+      })
+      .catch(() => {
+        // Permission denied — show error
+        errorMsg.style.display = "block";
+      });
+
+    startButton.addEventListener("click", async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false
+        });
+
+        leftEye.srcObject = stream;
+        rightEye.srcObject = stream;
+
+        container.style.display = "flex";
+        startButton.style.display = "none";
+
+        // Enter fullscreen
+        const el = document.documentElement;
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+
+        await leftEye.play();
+        await rightEye.play();
+      } catch (err) {
+        errorMsg.style.display = "block";
+        console.error("Failed to start camera:", err);
+      }
+    });
+  </script>
+</body>
+</html>
